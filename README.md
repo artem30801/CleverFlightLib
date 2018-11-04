@@ -6,7 +6,7 @@ Clone or download this repository to Raspberry Pi on your Clever-running copter 
 ```bash
 git clone https://github.com/artem30801/CleverFlightLib
 ```
-Setup your copter using [official docs](https://clever.copterexpress.com/)
+Setup your copter using [official COEX docs](https://clever.copterexpress.com/).
 Import FlightLib inro your python code for autonomous flight and init ros node with any name
 Example:
 ```python
