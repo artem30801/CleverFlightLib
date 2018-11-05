@@ -31,7 +31,6 @@ y_current = 0
 z_current = 0
 
 
-# noinspection PyCompatibility
 def safety_check(confirm=True):
     telemetry = get_telemetry(frame_id='aruco_map')
     print("Telems are:", "x=", telemetry.x, ", y=", telemetry.y, ", z=", telemetry.z, "yaw=", telemetry.yaw, "pitch=",
@@ -186,22 +185,27 @@ def circle(x_point, y_point, z_point, r, speed=0.5, angle_init=0.0, angle_max=ma
     print("Ended moving in circle")
 
 
-def flip(flip_roll=True, flip_pitch=False, invert_roll=False, invert_pitch=True, thrust=0.2):  # TODO
+def flip(side=False, invert=False thrust=0.2):  
+    # side=False for forward flip, side=True for right flip
+    direction = -1 if invert else 1
+    rate = (5 * math.pi) * direction
     capture_position()
-    telemetry = get_telemetry(frame_id=frame_id)
+    telemetry = get_telemetry()
+    print("Starting flip...")
+    if side:
+        set_rates(roll_rate=rate, thrust=thrust)
+        while abs(telemetry.roll) < math.pi / 2:
+            telemetry = get_telemetry()
 
-    roll_rate = (5 * math.pi) * flip_roll
-    pitch_rate = (5 * math.pi) * flip_pitch
+    else:
+        set_rates( pitch_rate=rate, thrust=thrust)
+        while abs(telemetry.pitch) < math.pi / 2:
+            telemetry = get_telemetry()
+    print("Stabilizing")
+    set_position(x=x_current, y=y_current, z=z_current)
 
-    roll_rate = roll_rate * (-1) if invert_roll else roll_rate
-    pitch_rate = pitch_rate * (-1) if invert_pitch else pitch_rate
-
-    set_rates(roll_rate=roll_rate, pitch_rate=pitch_rate, thrust=thrust)
-
-    while abs(telemetry.roll) < math.pi / 2:  # TODO
-        telemetry = get_telemetry(frame_id=frame_id)
-
-    reach(x=x_current, y=y_current, z=z_current)
+    print("Flipped, heading to flip start position")
+    navto(x=x_current, y=y_current, z=z_current)
 
 
 def takeoff(z=1, speed_takeoff=1.0, speed=1.0, yaw=float('nan'), frame_id='fcu_horiz',
@@ -219,7 +223,7 @@ def takeoff(z=1, speed_takeoff=1.0, speed=1.0, yaw=float('nan'), frame_id='fcu_h
         time = (rospy.get_rostime() - time_start).to_sec() * 1000
         if timeout_arm != 0 and (time >= timeout_arm):
             print("Not armed, timed out. Not ready to flight, exiting!")
-            sys.exit()
+            sys.exit() #TODO maybe here can be another option...
         rate.sleep()
 
     print("In air!")
@@ -272,7 +276,7 @@ def land(z=0.75, wait_ms=100, timeout=10000, timeout_land=5000, preland=True):
         if timeout_land != 0 and (time >= timeout_land):
             print("Not detected autoland, timed out. Disarming!")
             arming(False)
-            return False
+            return True
         rate.sleep()
     print("Land completed!")
     return True
