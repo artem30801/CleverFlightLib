@@ -14,3 +14,4 @@ from FlightLib import FlightLib as drone
 FlightLib.init('CleverFlight') 
 from FlightLib import LedLib as led
 ```
+For further information fo to wiki.
