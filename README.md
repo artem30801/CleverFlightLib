@@ -13,4 +13,4 @@ from FlightLib import FlightLib as drone
 FlightLib.init('CleverFlight') 
 from FlightLib import LedLib as led
 ```
-Для более детальнной информации и справки загляните на вики.
+Для более детальнной информации и справки загляните на [вики](https://github.com/artem30801/CleverFlightLib/wiki).
