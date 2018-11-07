@@ -208,17 +208,18 @@ def flip(side=False, invert=False thrust=0.2):
     navto(x=x_current, y=y_current, z=z_current)
 
 
-def takeoff(z=1, speed_takeoff=1.0, speed=1.0, yaw=float('nan'), frame_id='fcu_horiz',
+def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'), 
+            frame_id_takeoff='fcu_horiz', frame_id_inair='aruco_map'
             tolerance=0.25, wait_ms=25, delay_fcu=1000,
             timeout_arm=1500, timeout_fcu=3000, timeout=7500):
     print("Starting takeoff!")
-    navigate(frame_id=frame_id, x=0, y=0, z=z, yaw=float('nan'), speed=speed_takeoff, update_frame=False, auto_arm=True)
+    navigate(frame_id=frame_id_takeoff, x=0, y=0, z=z, yaw=float('nan'), speed=speed_takeoff, update_frame=False, auto_arm=True)
 
-    telemetry = get_telemetry(frame_id=frame_id)
+    telemetry = get_telemetry(frame_id=frame_id_takeoff)
     rate = rospy.Rate(1000 / wait_ms)
     time_start = rospy.get_rostime()
     while not telemetry.armed:
-        telemetry = get_telemetry(frame_id=frame_id)
+        telemetry = get_telemetry(frame_id=frame_id_takeoff)
         print("Arming...")
         time = (rospy.get_rostime() - time_start).to_sec() * 1000
         if timeout_arm != 0 and (time >= timeout_arm):
@@ -228,11 +229,11 @@ def takeoff(z=1, speed_takeoff=1.0, speed=1.0, yaw=float('nan'), frame_id='fcu_h
 
     print("In air!")
     rospy.sleep(1000 / delay_fcu)
-    telemetry = get_telemetry(frame_id='aruco_map')
+    telemetry = get_telemetry(frame_id=frame_id_inair)
     rate = rospy.Rate(1000 / wait_ms)
     time_start = rospy.get_rostime()
     while z - tolerance > telemetry.z:
-        telemetry = get_telemetry(frame_id='aruco_map')
+        telemetry = get_telemetry(frame_id=frame_id_inair)
         print('Taking off | Telemetry | z: ', '{:.3f}'.format(telemetry.z), sep='')
 
         time = (rospy.get_rostime() - time_start).to_sec() * 1000
@@ -242,7 +243,7 @@ def takeoff(z=1, speed_takeoff=1.0, speed=1.0, yaw=float('nan'), frame_id='fcu_h
         rate.sleep()
 
     print("Reaching takeoff attitude!")
-    result = attitude(z, yaw=yaw, speed=speed, tolerance=tolerance, timeout=timeout)
+    result = attitude(z, yaw=yaw, speed=speed_inair, tolerance=tolerance, timeout=timeout, frame_id=frame_id_inair)
     if result:
         print("Takeoff attitude reached. Takeoff completed!")
         return True
