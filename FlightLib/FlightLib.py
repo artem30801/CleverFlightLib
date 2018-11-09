@@ -31,18 +31,43 @@ y_current = 0
 z_current = 0
 
 
-def safety_check(confirm=True):
+def check_isflipped(display=False):
+    pi_2 = math.pi / 2
+    telemetry = get_telemetry()
+    flipped = not -pi_2 <= telemetry.pitch <= pi_2 or not -pi_2 <= telemetry.roll <= pi_2
+    if display:
+        print("Drone state - flipped:", flipped)
+        if flipped:
+            print("[!!!] Drone IS flipped!")
+    return flipped  #flipped=false means NOT flipped, everything good
+
+
+def check_ismoving(display=False, tolerance=0.15, frame_id="fcu_horiz", )
+    telemetry = get_telemetry(frame_id=frame_id)
+    ismoving = abs(telemetry.vz) > tolerance or abs(telemetry.vx) > tolerance or abs(telemetry.vy) > tolerance
+    if display:
+        print("Drone state - is moving:", ismoving)
+        if ismoving:
+            print("[!!!] Drone IS MOVING!")
+    return ismoving
+
+def safety_check(confirm=True): #TODO refactor as compilation of several cheks
+    result = True
+    isflipped(display=True)
     telemetry = get_telemetry(frame_id='aruco_map')
-    print("Telems are:", "x=", telemetry.x, ", y=", telemetry.y, ", z=", telemetry.z, "yaw=", telemetry.yaw, "pitch=",
+    print("Aruco telems are:", "x=", telemetry.x, ", y=", telemetry.y, ", z=", telemetry.z, "yaw=", telemetry.yaw, "pitch=",
           telemetry.pitch,
           "roll=", telemetry.pitch)
     telemetry = get_telemetry(frame_id='fcu_horiz')
-    print("Telems are:", "V-z=", telemetry.vz, "voltage=", telemetry.voltage)
+    print("FCU telems are:", "V-z=", telemetry.vz, "voltage=", telemetry.voltage)
+    if abs(telemetry.vz) > 0.2:
+        print("[!!!] Estimated vartical speed is too high!")
     if confirm:
         raw_input("Are you sure about launch?")
         ans = raw_input("Are you ready to launch? Y/N: ")
         if ans.lower() != "y":
             sys.exit()
+    return True
 
 
 def get_distance(x1, y1, z1, x2, y2, z2):
@@ -211,7 +236,7 @@ def flip(side=False, invert=False thrust=0.2):
 def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'), 
             frame_id_takeoff='fcu_horiz', frame_id_inair='aruco_map'
             tolerance=0.25, wait_ms=25, delay_fcu=1000,
-            timeout_arm=1500, timeout_fcu=3000, timeout=7500):
+            timeout_arm=1500, timeout_takeoff=3000, timeout_inair=7500):
     print("Starting takeoff!")
     navigate(frame_id=frame_id_takeoff, x=0, y=0, z=z, yaw=float('nan'), speed=speed_takeoff, update_frame=False, auto_arm=True)
 
@@ -237,13 +262,13 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
         print('Taking off | Telemetry | z: ', '{:.3f}'.format(telemetry.z), sep='')
 
         time = (rospy.get_rostime() - time_start).to_sec() * 1000
-        if timeout_fcu != 0 and (time >= timeout_fcu):
+        if timeout_takeoff != 0 and (time >= timeout_takeoff):
             print('Takeoff | Timed out! | t: ', time, sep='')
             break
         rate.sleep()
 
     print("Reaching takeoff attitude!")
-    result = attitude(z, yaw=yaw, speed=speed_inair, tolerance=tolerance, timeout=timeout, frame_id=frame_id_inair)
+    result = attitude(z, yaw=yaw, speed=speed_inair, tolerance=tolerance, timeout=timeout_inair, frame_id=frame_id_inair)
     if result:
         print("Takeoff attitude reached. Takeoff completed!")
         return True
