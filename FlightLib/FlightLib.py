@@ -194,7 +194,6 @@ def spin(yaw_rate=0.2, speed=1.0, frame_id='aruco_map', timeout=5000):
     navigate(frame_id=frame_id, x=x_current, y=y_current, z=z_current, yaw=float('nan'), yaw_rate=yaw_rate, speed=speed)
     print('Spinning at speed | yaw_rate: ', '{:.3f}'.format(yaw_rate), sep='')
     rospy.sleep(timeout / 1000)
-    if timeout != 0:
     if timeout is not None:
         navigate(frame_id=frame_id, x=x_current, y=y_current, z=z_current, yaw=float('nan'), yaw_rate=0.0, speed=speed)
         print('Spinning complete | Timeout | t: ', timeout, sep='')
