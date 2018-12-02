@@ -232,7 +232,7 @@ def circle(x_point, y_point, z_point, r, speed=0.5, angle_init=0.0, angle_max=ma
     print("Ended moving in circle")
 
 
-def flip(side=False, invert=False thrust=0.2):  
+def flip(side=False, invert=False, thrust=0.2):  
     # side=False for forward flip, side=True for right flip
     direction = -1 if invert else 1
     rate = (5 * math.pi) * direction
