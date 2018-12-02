@@ -256,7 +256,7 @@ def flip(side=False, invert=False, thrust=0.2):
 
 
 def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'), 
-            frame_id_takeoff='fcu_horiz', frame_id_inair='aruco_map'
+            frame_id_takeoff='fcu_horiz', frame_id_inair='aruco_map',
             tolerance=0.25, wait_ms=25, delay_fcu=1000,
             timeout_arm=1500, timeout_takeoff=3000, timeout_inair=7500):
     print("Starting takeoff!")
