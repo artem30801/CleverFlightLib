@@ -38,17 +38,17 @@ def check_isflipped(display=False):
     if display:
         print("Drone state - flipped:", flipped)
         if flipped:
-            print("[!!!] Drone IS flipped!")
+            print("[!!] Drone IS flipped!")
     return flipped  #flipped=false means NOT flipped, everything good
 
 
-def check_ismoving(display=False, tolerance=0.15, frame_id="fcu_horiz", )
+def check_ismoving(display=False, tolerance=0.15, frame_id="fcu_horiz"):
     telemetry = get_telemetry(frame_id=frame_id)
     ismoving = abs(telemetry.vz) > tolerance or abs(telemetry.vx) > tolerance or abs(telemetry.vy) > tolerance
     if display:
         print("Drone state - is moving:", ismoving)
         if ismoving:
-            print("[!!!] Drone IS MOVING!")
+            print("[!!] Drone IS MOVING!")
     return ismoving
 
 def safety_check(confirm=True): #TODO refactor as compilation of several cheks
@@ -72,6 +72,26 @@ def safety_check(confirm=True): #TODO refactor as compilation of several cheks
 
 def get_distance(x1, y1, z1, x2, y2, z2):
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
+    
+
+def get_distance_global(lat1, lon1, alt1, lat2, lon2, alt2):
+    dist_horiz = math.hypot(lat1 - lat2, lon1 - lon2) * 1.113195e5
+    return math.sqrt(dist_horiz ** 2 + (alt2 - alt1) ** 2)
+
+
+def get_coordinates(frame_id='aruco_map'):
+    telemetry = get_telemetry(frame_id=frame_id)
+    return telemetry.x, telemetry.y, telemetry.z
+
+
+def get_yaw(frame_id='aruco_map'):
+    telemetry = get_telemetry(frame_id=frame_id)
+    return telemetry.yaw
+
+
+def get_distance_current(x, y, z, frame_id='aruco_map'):
+    x_c, y_c, z_c = get_coordinates(frame_id=frame_id)
+    return get_distance(x, y, z, x_c, y_c, z_c)
 
 
 def capture_position(frame_id='aruco_map'):
@@ -99,9 +119,9 @@ def navto(x, y, z, yaw=float('nan'), speed=1.0, frame_id='aruco_map'):
     return True
 
 
-def reach(x, y, z, yaw=float('nan'), yaw_rate=0.0, speed=1.0, tolerance=0.2, frame_id='aruco_map', wait_ms=100,
+def reach(x, y, z, yaw=float('nan'), speed=1.0, tolerance=0.2, frame_id='aruco_map', wait_ms=100,
           timeout=7500):
-    navigate(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw, yaw_rate=yaw_rate, speed=speed)
+    navigate(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw, speed=speed)
     print('Reaching point | x: ', '{:.3f}'.format(x), ' y: ', '{:.3f}'.format(y), ' z: ', '{:.3f}'.format(z), ' yaw: ',
           '{:.3f}'.format(yaw), sep='')
 
@@ -124,10 +144,10 @@ def reach(x, y, z, yaw=float('nan'), yaw_rate=0.0, speed=1.0, tolerance=0.2, fra
     return True
 
 
-def attitude(z, yaw=float('nan'), yaw_rate=0.0, speed=1.0, tolerance=0.2, frame_id='aruco_map', wait_ms=100,
+def attitude(z, yaw=float('nan'), speed=1.0, tolerance=0.2, frame_id='aruco_map', wait_ms=100,
              timeout=5000):
     capture_position(frame_id=frame_id)
-    navigate(frame_id=frame_id, x=x_current, y=y_current, z=z, yaw=yaw, yaw_rate=yaw_rate, speed=speed)
+    navigate(frame_id=frame_id, x=x_current, y=y_current, z=z, yaw=yaw, speed=speed)
     print('Reaching attitude | z: ', '{:.3f}'.format(z), ' yaw: ', '{:.3f}'.format(yaw), sep='')
 
     # waiting for completion
@@ -148,9 +168,9 @@ def attitude(z, yaw=float('nan'), yaw_rate=0.0, speed=1.0, tolerance=0.2, frame_
     return True
 
 
-def rotate_to(yaw, yaw_rate=0.0, tolerance=0.2, speed=1.0, frame_id='aruco_map', wait_ms=100, timeout=5000):
+def rotate_to(yaw, tolerance=0.2, speed=1.0, frame_id='aruco_map', wait_ms=100, timeout=5000):
     capture_position(frame_id=frame_id)
-    navigate(frame_id=frame_id, x=x_current, y=y_current, z=z_current, yaw=yaw, yaw_rate=yaw_rate, speed=speed)
+    navigate(frame_id=frame_id, x=x_current, y=y_current, z=z_current, yaw=yaw, speed=speed)
     print('Reaching angle | yaw: ', '{:.3f}'.format(yaw), sep='')
 
     # waiting for completion
@@ -174,9 +194,12 @@ def spin(yaw_rate=0.2, speed=1.0, frame_id='aruco_map', timeout=5000):
     navigate(frame_id=frame_id, x=x_current, y=y_current, z=z_current, yaw=float('nan'), yaw_rate=yaw_rate, speed=speed)
     print('Spinning at speed | yaw_rate: ', '{:.3f}'.format(yaw_rate), sep='')
     rospy.sleep(timeout / 1000)
-
-    navigate(frame_id=frame_id, x=x_current, y=y_current, z=z_current, yaw=float('nan'), yaw_rate=0.0, speed=speed)
-    print('Spinning complete | Timeout | t: ', timeout, sep='')
+    if timeout != 0:
+    if timeout is not None:
+        navigate(frame_id=frame_id, x=x_current, y=y_current, z=z_current, yaw=float('nan'), yaw_rate=0.0, speed=speed)
+        print('Spinning complete | Timeout | t: ', timeout, sep='')
+    else:
+        print('Spinning continuously')
     return True
 
 
@@ -277,10 +300,10 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
         return False
 
 
-def land(z=0.75, wait_ms=100, timeout=10000, timeout_land=5000, preland=True):
+def land(preland=True, z=0.75, timeout_preland=10000, frame_id_preland='aruco_map', timeout_land=5000, wait_ms=100):
     if preland:
         print("Pre-Landing!")
-        result = attitude(z, tolerance=0.25, timeout=timeout)
+        result = attitude(z, timeout=timeout_preland, frame_id=frame_id_preland)
         if result:
             print("Ready to land")
         else:
