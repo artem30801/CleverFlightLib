@@ -270,8 +270,9 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
         print("Arming...")
         time = (rospy.get_rostime() - time_start).to_sec() * 1000
         if timeout_arm != 0 and (time >= timeout_arm):
-            print("Not armed, timed out. Not ready to flight, exiting!")
-            sys.exit() #TODO maybe here can be another option...
+            print("Not armed, timed out.")
+            #print("Not ready to flight, exiting!")
+            #sys.exit() #TODO maybe here can be another option...
         rate.sleep()
 
     print("In air!")
