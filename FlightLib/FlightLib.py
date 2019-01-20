@@ -2,6 +2,7 @@
 from __future__ import print_function
 import math
 import sys
+import time
 import rospy
 from clever import srv
 from mavros_msgs.srv import SetMode
@@ -257,8 +258,11 @@ def flip(side=False, invert=False, thrust=0.2):
 
 def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'), 
             frame_id_takeoff='fcu_horiz', frame_id_inair='aruco_map',
-            tolerance=0.25, wait_ms=25, delay_fcu=1000,
+            tolerance=0.25, wait_ms=25, delay_fcu=1000, fixed_delay=False,
             timeout_arm=1500, timeout_takeoff=3000, timeout_inair=7500):
+    if fixed_delay:
+        fixed_delay_time = (delay_fcu+timeout_arm+timeout_takeoff+timeout_inair) / 1000
+        time_start = time.time()
     print("Starting takeoff!")
     navigate(frame_id=frame_id_takeoff, x=0, y=0, z=z, yaw=float('nan'), speed=speed_takeoff, update_frame=False, auto_arm=True)
 
@@ -271,6 +275,7 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
         time = (rospy.get_rostime() - time_start).to_sec() * 1000
         if timeout_arm != 0 and (time >= timeout_arm):
             print("Not armed, timed out.")
+            break
             #print("Not ready to flight, exiting!")
             #sys.exit() #TODO maybe here can be another option...
         rate.sleep()
@@ -292,6 +297,12 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
 
     print("Reaching takeoff attitude!")
     result = attitude(z, yaw=yaw, speed=speed_inair, tolerance=tolerance, timeout=timeout_inair, frame_id=frame_id_inair)
+    if fixed_delay:
+        dt = time.time() - time_start
+        if dt < fixed_delay_time:
+            time_to_sleep = fixed_delay_time - dt
+            print("Fixed delay:", time_to_sleep)
+            rospy.sleep(time_to_sleep)
     if result:
         print("Takeoff attitude reached. Takeoff completed!")
         return True
