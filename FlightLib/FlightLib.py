@@ -108,7 +108,7 @@ def capture_position(frame_id='aruco_map'):
 
 
 def navto(x, y, z, yaw=float('nan'), speed=1.0, frame_id='aruco_map'):
-    navigate(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw, speed=speed)
+    set_position(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw, speed=speed)
     print(
         'Going to... | '
         'x: {:.3f} '
