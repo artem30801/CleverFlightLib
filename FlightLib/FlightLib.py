@@ -108,7 +108,7 @@ def capture_position(frame_id='aruco_map'):
 
 
 def navto(x, y, z, yaw=float('nan'), speed=1.0, frame_id='aruco_map'):
-    set_position(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw, speed=speed)
+    set_position(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw)  # , speed=speed
     print(
         'Going to... | '
         'x: {:.3f} '
@@ -122,7 +122,7 @@ def navto(x, y, z, yaw=float('nan'), speed=1.0, frame_id='aruco_map'):
 
 def reach(x, y, z, yaw=float('nan'), speed=1.0, tolerance=0.2, frame_id='aruco_map', wait_ms=100,
           timeout=7500):
-    navigate(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw)  # , speed=speed
+    navigate(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw, speed=speed)
     print('Reaching point | x: ', '{:.3f}'.format(x), ' y: ', '{:.3f}'.format(y), ' z: ', '{:.3f}'.format(z), ' yaw: ',
           '{:.3f}'.format(yaw), sep='')
 
