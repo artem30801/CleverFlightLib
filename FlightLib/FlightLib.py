@@ -298,7 +298,7 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
     print("Reaching takeoff attitude!")
     result = attitude(z, yaw=yaw, speed=speed_inair, tolerance=tolerance, timeout=timeout_inair, frame_id=frame_id_inair)
     if fixed_delay:
-        dt = rospy.Duration(rospy.get_rostime() - delay_timer_start.to_sec())
+        dt = rospy.Duration(rospy.get_rostime() - delay_timer_start)
         if dt < fixed_delay_time:
             time_to_sleep = fixed_delay_time - dt.to_sec()
             print("Fixed delay:", time_to_sleep)
