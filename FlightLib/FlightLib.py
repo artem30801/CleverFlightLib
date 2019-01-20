@@ -262,7 +262,7 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
             timeout_arm=1500, timeout_takeoff=3000, timeout_inair=7500):
     if fixed_delay:
         fixed_delay_time = (delay_fcu+timeout_arm+timeout_takeoff+timeout_inair) / 1000
-        time_start = time.time()
+        delay_timer_start = rospy.get_rostime()
     print("Starting takeoff!")
     navigate(frame_id=frame_id_takeoff, x=0, y=0, z=z, yaw=float('nan'), speed=speed_takeoff, update_frame=False, auto_arm=True)
 
@@ -298,7 +298,7 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
     print("Reaching takeoff attitude!")
     result = attitude(z, yaw=yaw, speed=speed_inair, tolerance=tolerance, timeout=timeout_inair, frame_id=frame_id_inair)
     if fixed_delay:
-        dt = time.time() - time_start
+        dt = rospy.get_rostime() - delay_timer_start
         if dt < fixed_delay_time:
             time_to_sleep = fixed_delay_time - dt
             print("Fixed delay:", time_to_sleep)
