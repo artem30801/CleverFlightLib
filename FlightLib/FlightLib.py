@@ -299,10 +299,13 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
     result = attitude(z, yaw=yaw, speed=speed_inair, tolerance=tolerance, timeout=timeout_inair, frame_id=frame_id_inair)
     if fixed_delay:
         dt = (rospy.get_rostime() - delay_timer_start)
+        print(dt.to_sec(), "seconds forward")
         if dt.to_sec() < fixed_delay_time:
             time_to_sleep = fixed_delay_time - dt.to_sec()
             print("Fixed delay:", time_to_sleep)
             rospy.sleep(time_to_sleep)
+        else:
+            print("Delay not needed")
     if result:
         print("Takeoff attitude reached. Takeoff completed!")
         return True
