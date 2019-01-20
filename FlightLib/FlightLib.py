@@ -302,7 +302,7 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
         print(dt.to_sec(), "seconds forward")
         if dt.to_sec() < fixed_delay_time:
             time_to_sleep = fixed_delay_time - dt.to_sec()
-            print("Fixed delay:", time_to_sleep)
+            print("Fixed delay:", time_to_sleep, "of needed", delay_timer_start)
             rospy.sleep(time_to_sleep)
         else:
             print("Delay not needed")
