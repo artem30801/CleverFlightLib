@@ -256,7 +256,7 @@ def flip(side=False, invert=False, thrust=0.2):
     navto(x=x_current, y=y_current, z=z_current)
 
 
-def takeoff(x, y, z, speed_takeoff=1.5):
+def takeoff(x, y, z, frame_id_takeoff='fcu_horiz', speed_takeoff=1.5):
     navigate(frame_id=frame_id_takeoff, x=0, y=0, z=z, speed=speed_takeoff, update_frame=False, auto_arm=True)
     rospy.sleep(1.2)
     navigate(frame_id="aruco_map", x=x, y=y, z=z, speed=1, update_frame=True, auto_arm=False)
