@@ -109,6 +109,8 @@ def capture_position(frame_id='aruco_map'):
 
 def navto(x, y, z, yaw=float('nan'), speed=1.0, frame_id='aruco_map'):
     set_position(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw)  # , speed=speed
+    telemetry = get_telemetry(frame_id=frame_id)
+
     print(
         'Going to... | '
         'x: {:.3f} '
@@ -116,7 +118,8 @@ def navto(x, y, z, yaw=float('nan'), speed=1.0, frame_id='aruco_map'):
         'z: {:.3f} '
         'yaw: {:.3f}'.format(
             x, y, z, yaw
-        ))
+        )
+        "Telemetry z: {:.3f}".format(telemetry.z))
     return True
 
 
@@ -258,7 +261,7 @@ def flip(side=False, invert=False, thrust=0.2):
 
 def takeoff(x, y, z, frame_id_takeoff='fcu_horiz', speed_takeoff=1.5):
     navigate(frame_id=frame_id_takeoff, x=0, y=0, z=z, speed=speed_takeoff, update_frame=False, auto_arm=True)
-    rospy.sleep(1.2)
+    rospy.sleep(2)
     navigate(frame_id="aruco_map", x=x, y=y, z=z, speed=1, update_frame=True, auto_arm=False)
     rospy.sleep(3)
 
