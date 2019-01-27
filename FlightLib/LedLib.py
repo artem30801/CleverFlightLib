@@ -215,11 +215,21 @@ def led_thread():
         elif mode == "off":
             strip_off()
             mode = ""
-        time.sleep(1 / 1000)
+        else:
+            time.sleep(1 / 1000)
 
 
 # init
-strip.begin()
-t_l = Thread(target=led_thread)
-t_l.daemon = True
-t_l.start()
+def init_led():
+    strip.begin()
+    t_l = Thread(target=led_thread)
+    t_l.daemon = True
+    t_l.start()
+
+
+if __name__ == '__main__':
+    init_led()
+    try:
+        rainbow()
+    except KeyboardInterrupt:
+        off()
