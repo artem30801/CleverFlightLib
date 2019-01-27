@@ -118,8 +118,8 @@ def navto(x, y, z, yaw=float('nan'), speed=1.0, frame_id='aruco_map'):
         'z: {:.3f} '
         'yaw: {:.3f}'.format(
             x, y, z, yaw
-        )
-        "Telemetry z: {:.3f}".format(telemetry.z))
+        ),
+        'Telemetry z: {:.3f}'.format(telemetry.z))
     return True
 
 
