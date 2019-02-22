@@ -2,6 +2,7 @@
 from __future__ import print_function
 import math
 import sys
+import time
 import rospy
 from clever import srv
 from mavros_msgs.srv import SetMode
@@ -9,9 +10,9 @@ from mavros_msgs.srv import CommandBool
 
 
 # init ros node
-def init(node_name="CleverSwarmFlight"):
+def init(node_name="CleverSwarmFlight", anon=True, no_signals=True):
     print("Initing")
-    rospy.init_node(node_name)
+    rospy.init_node(node_name, anonymous=anon, disable_signals=no_signals)
     print("Node inited")
 
 
@@ -107,7 +108,9 @@ def capture_position(frame_id='aruco_map'):
 
 
 def navto(x, y, z, yaw=float('nan'), speed=1.0, frame_id='aruco_map'):
-    navigate(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw, speed=speed)
+    set_position(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw)  # , speed=speed
+    telemetry = get_telemetry(frame_id=frame_id)
+
     print(
         'Going to... | '
         'x: {:.3f} '
@@ -115,7 +118,8 @@ def navto(x, y, z, yaw=float('nan'), speed=1.0, frame_id='aruco_map'):
         'z: {:.3f} '
         'yaw: {:.3f}'.format(
             x, y, z, yaw
-        ))
+        ),
+        'Telemetry z: {:.3f}'.format(telemetry.z))
     return True
 
 
@@ -255,10 +259,23 @@ def flip(side=False, invert=False, thrust=0.2):
     navto(x=x_current, y=y_current, z=z_current)
 
 
-def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'), 
+def takeoff1(x, y, z, frame_id_takeoff='fcu_horiz', speed_takeoff=1.5):
+    print("Starting takeoff!")
+    navigate(frame_id=frame_id_takeoff, x=0, y=0, z=z, speed=speed_takeoff, update_frame=False, auto_arm=True)
+    rospy.sleep(2)
+    navigate(frame_id="aruco_map", x=x, y=y, z=z, speed=1, update_frame=True, auto_arm=False)
+    rospy.sleep(3)
+    print("Takeoff ended!")
+
+
+
+def takeoff(z=1, speed_takeoff=1.2, speed_inair=1.0, yaw=float('nan'), 
             frame_id_takeoff='fcu_horiz', frame_id_inair='aruco_map',
-            tolerance=0.25, wait_ms=25, delay_fcu=1000,
+            tolerance=0.25, wait_ms=25, delay_fcu=1500, fixed_delay=False,
             timeout_arm=1500, timeout_takeoff=3000, timeout_inair=7500):
+    if fixed_delay:
+        fixed_delay_time = (delay_fcu+timeout_arm+timeout_takeoff+timeout_inair) / 1000
+        delay_timer_start = rospy.get_rostime()
     print("Starting takeoff!")
     navigate(frame_id=frame_id_takeoff, x=0, y=0, z=z, yaw=float('nan'), speed=speed_takeoff, update_frame=False, auto_arm=True)
 
@@ -270,8 +287,10 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
         print("Arming...")
         time = (rospy.get_rostime() - time_start).to_sec() * 1000
         if timeout_arm != 0 and (time >= timeout_arm):
-            print("Not armed, timed out. Not ready to flight, exiting!")
-            sys.exit() #TODO maybe here can be another option...
+            print("Not armed, timed out.")
+            break
+            #print("Not ready to flight, exiting!")
+            #sys.exit() #TODO maybe here can be another option...
         rate.sleep()
 
     print("In air!")
@@ -291,6 +310,16 @@ def takeoff(z=1, speed_takeoff=1.0, speed_inair=1.0, yaw=float('nan'),
 
     print("Reaching takeoff attitude!")
     result = attitude(z, yaw=yaw, speed=speed_inair, tolerance=tolerance, timeout=timeout_inair, frame_id=frame_id_inair)
+    if fixed_delay:
+        dt = (rospy.get_rostime() - delay_timer_start)
+        print(dt.to_sec(), "seconds forward")
+        if dt.to_sec() < fixed_delay_time:
+            time_to_sleep = fixed_delay_time - dt.to_sec()
+            print("Fixed delay:", time_to_sleep, "of needed", delay_timer_start)
+            #rospy.sleep(time_to_sleep)s
+            print("nosleep")
+        else:
+            print("Delay not needed")
     if result:
         print("Takeoff attitude reached. Takeoff completed!")
         return True
