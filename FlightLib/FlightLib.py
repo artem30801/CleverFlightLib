@@ -7,6 +7,7 @@ import rospy
 from clever import srv
 from mavros_msgs.srv import SetMode
 from mavros_msgs.srv import CommandBool
+from std_srvs.srv import Trigger
 
 
 # init ros node
@@ -23,6 +24,7 @@ set_rates = rospy.ServiceProxy('/set_rates', srv.SetRates)
 set_mode = rospy.ServiceProxy('/mavros/set_mode', SetMode)
 get_telemetry = rospy.ServiceProxy('get_telemetry', srv.GetTelemetry)
 arming = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
+landing = rospy.ServiceProxy('/land', Trigger)
 
 print("Proxy services inited")
 
@@ -43,7 +45,7 @@ def check_isflipped(display=False):
     return flipped  #flipped=false means NOT flipped, everything good
 
 
-def check_ismoving(display=False, tolerance=0.15, frame_id="fcu_horiz"):
+def check_ismoving(display=False, tolerance=0.15, frame_id="body"):
     telemetry = get_telemetry(frame_id=frame_id)
     ismoving = abs(telemetry.vz) > tolerance or abs(telemetry.vx) > tolerance or abs(telemetry.vy) > tolerance
     if display:
@@ -59,7 +61,7 @@ def safety_check(confirm=True): #TODO refactor as compilation of several cheks
     print("Aruco telems are:", "x=", telemetry.x, ", y=", telemetry.y, ", z=", telemetry.z, "yaw=", telemetry.yaw, "pitch=",
           telemetry.pitch,
           "roll=", telemetry.pitch)
-    telemetry = get_telemetry(frame_id='fcu_horiz')
+    telemetry = get_telemetry(frame_id='body')
     print("FCU telems are:", "V-z=", telemetry.vz, "voltage=", telemetry.voltage)
     if abs(telemetry.vz) > 0.2:
         print("[!!!] Estimated vartical speed is too high!")
@@ -107,7 +109,7 @@ def capture_position(frame_id='aruco_map'):
     z_current = round(telemetry.z, 3)
 
 
-def navto(x, y, z, yaw=float('nan'), speed=1.0, frame_id='aruco_map'):
+def navto(x, y, z, yaw=float('nan'), frame_id='aruco_map'):
     set_position(frame_id=frame_id, x=x, y=y, z=z, yaw=yaw)  # , speed=speed
     telemetry = get_telemetry(frame_id=frame_id)
 
@@ -259,25 +261,23 @@ def flip(side=False, invert=False, thrust=0.2):
     navto(x=x_current, y=y_current, z=z_current)
 
 
-def takeoff1(x, y, z, frame_id_takeoff='fcu_horiz', speed_takeoff=1.5):
+def takeoff1(z = 1.0, frame_id_takeoff='body', speed_takeoff=0.5):
     print("Starting takeoff!")
-    navigate(frame_id=frame_id_takeoff, x=0, y=0, z=z, speed=speed_takeoff, update_frame=False, auto_arm=True)
-    rospy.sleep(2)
-    navigate(frame_id="aruco_map", x=x, y=y, z=z, speed=1, update_frame=True, auto_arm=False)
-    rospy.sleep(3)
+    navigate(frame_id=frame_id_takeoff, z=z, speed=speed_takeoff, auto_arm=True)
+    rospy.sleep(5)
     print("Takeoff ended!")
 
 
 
 def takeoff(z=1, speed_takeoff=1.2, speed_inair=1.0, yaw=float('nan'), 
-            frame_id_takeoff='fcu_horiz', frame_id_inair='aruco_map',
+            frame_id_takeoff='body', frame_id_inair='aruco_map',
             tolerance=0.25, wait_ms=25, delay_fcu=1500, fixed_delay=False,
             timeout_arm=1500, timeout_takeoff=3000, timeout_inair=7500):
     if fixed_delay:
         fixed_delay_time = (delay_fcu+timeout_arm+timeout_takeoff+timeout_inair) / 1000
         delay_timer_start = rospy.get_rostime()
     print("Starting takeoff!")
-    navigate(frame_id=frame_id_takeoff, x=0, y=0, z=z, yaw=float('nan'), speed=speed_takeoff, update_frame=False, auto_arm=True)
+    navigate(frame_id=frame_id_takeoff, x=0, y=0, z=z, yaw=float('nan'), speed=speed_takeoff, auto_arm=True)
 
     telemetry = get_telemetry(frame_id=frame_id_takeoff)
     rate = rospy.Rate(1000 / wait_ms)
@@ -357,6 +357,12 @@ def land(preland=True, z=0.75, timeout_preland=10000, frame_id_preland='aruco_ma
         rate.sleep()
     print("Land completed!")
     return True
+
+def land1():
+    landing()
+
+
+
 
 
 if __name__ == "__main__":  # only if run FlightLib directly
