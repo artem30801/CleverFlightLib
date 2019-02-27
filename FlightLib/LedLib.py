@@ -1,7 +1,7 @@
 from __future__ import print_function
 from threading import Thread
 import time
-from neopixel import *
+from rpi_ws281x import *
 
 # LED strip configuration:
 LED_COUNT = 29  # Number of LED pixels.
